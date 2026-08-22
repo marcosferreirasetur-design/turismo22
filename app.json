@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Observatório do Turismo de Bertioga",
+    "slug": "observatorio-turismo-bertioga",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "br.gov.sp.bertioga.observatorioturismo",
+      "adaptiveIcon": { "backgroundColor": "#073B4C" }
+    },
+    "ios": {
+      "bundleIdentifier": "br.gov.sp.bertioga.observatorioturismo",
+      "supportsTablet": true
+    },
+    "web": { "bundler": "metro" }
+  }
+}
