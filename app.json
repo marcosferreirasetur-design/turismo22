@@ -1,6 +1,9 @@
 {
   "expo": {
     "owner": "turismobertioga",
+    "experiments": {
+      "baseUrl": "/turismo22"
+    },
     "name": "Observatório do Turismo de Bertioga",
     "slug": "observatorio-turismo-bertioga",
     "version": "1.0.0",
@@ -17,6 +20,9 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-    "web": { "bundler": "metro" }
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
   }
 }
