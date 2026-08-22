@@ -11,7 +11,10 @@
     },
     "ios": {
       "bundleIdentifier": "br.gov.sp.bertioga.observatorioturismo",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "web": { "bundler": "metro" }
   }
