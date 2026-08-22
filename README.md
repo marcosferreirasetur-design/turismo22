@@ -15,6 +15,25 @@ npm start
 
 Use o aplicativo Expo Go para abrir o QR code, ou execute `npm run android`, `npm run ios` ou `npm run web`.
 
+## Gerar versão para iPhone
+
+O projeto possui perfis de compilação em `eas.json`.
+
+```bash
+npx eas-cli login
+npx eas-cli build:configure
+npx eas-cli build --platform ios --profile preview
+```
+
+Para a App Store/TestFlight, use o perfil de produção:
+
+```bash
+npx eas-cli build --platform ios --profile production
+npx eas-cli submit --platform ios --profile production
+```
+
+A assinatura exige autenticação direta na conta Apple Developer. O identificador do aplicativo é `br.gov.sp.bertioga.observatorioturismo`.
+
 ## Escopo inicial
 
 - painel executivo responsivo;
