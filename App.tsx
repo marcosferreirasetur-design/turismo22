@@ -1,122 +1,62 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { tourismData } from './src/data';
 
-type Tab = 'Visão geral' | 'Indicadores' | 'Fontes';
+type Tab = 'Resumo' | 'ISS' | 'Cadastur' | 'CNAEs';
+type Year = 2024 | 2025;
+type GissFilter = 'Maiores' | 'Altas' | 'Quedas';
+const C = { navy:'#073B4C',blue:'#087E8B',cyan:'#18A999',white:'#FFF',ink:'#173042',muted:'#647983',line:'#DDE8E9',coral:'#E76F51',green:'#269D6F',pale:'#F3F8F8',sand:'#F5EFE3',yellow:'#F4C95D' };
+const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(v);
+const number=(v:number)=>new Intl.NumberFormat('pt-BR').format(v);
+const percent=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1}).format(v);
 
-const COLORS = {
-  navy: '#073B4C', blue: '#087E8B', cyan: '#1CB5A3', sand: '#F5EFE3',
-  white: '#FFFFFF', ink: '#173042', muted: '#667985', line: '#DDE7E8',
-  coral: '#EF8354', green: '#2A9D6F', pale: '#F4F8F8', yellow: '#F4C95D',
-};
+function Header(){return <View style={s.header}><View style={s.mark}><Text style={s.wave}>≈</Text></View><View style={{flex:1}}><Text style={s.kicker}>PREFEITURA DE BERTIOGA</Text><Text style={s.brand}>Observatório do Turismo</Text></View><View style={s.badge}><View style={s.badgeDot}/><Text style={s.badgeText}>DADOS REAIS</Text></View></View>}
+function Title({title,subtitle}:{title:string;subtitle?:string}){return <View style={s.sectionHead}><Text style={s.sectionTitle}>{title}</Text>{subtitle&&<Text style={s.sectionSub}>{subtitle}</Text>}</View>}
+function Metric({label,value,note,color=C.blue}:{label:string;value:string;note:string;color?:string}){return <View style={s.metric}><View style={[s.metricLine,{backgroundColor:color}]}/><Text style={s.metricLabel}>{label}</Text><Text style={s.metricValue}>{value}</Text><Text style={s.metricNote}>{note}</Text></View>}
+function Bar({label,value,max,detail,negative=false}:{label:string;value:number;max:number;detail:string;negative?:boolean}){const width=max?Math.max(2,Math.min(100,Math.abs(value)/max*100)):0;return <View style={s.barRow}><View style={s.barLabels}><Text style={s.barName} numberOfLines={2}>{label}</Text><Text style={[s.barValue,negative&&{color:C.coral}]}>{detail}</Text></View><View style={s.track}><View style={[s.fill,{width:`${width}%`,backgroundColor:negative?C.coral:C.cyan}]}/></View></View>}
 
-const indicators = [
-  { label: 'Empresas do turismo', value: '—', note: 'Aguardando base oficial', color: COLORS.blue },
-  { label: 'Empregos formais', value: '—', note: 'RAIS/Caged', color: COLORS.cyan },
-  { label: 'Arrecadação de ISS', value: '—', note: 'Integração Fazenda', color: COLORS.coral },
-  { label: 'Prestadores Cadastur', value: '—', note: 'Atualização prevista', color: COLORS.green },
-];
-
-const axes = [
-  ['Demanda turística', 'Fluxo, perfil, origem e satisfação'],
-  ['Hospedagem', 'Ocupação, diária média e permanência'],
-  ['Economia', 'ISS, empresas, empregos e renda'],
-  ['Eventos', 'Público, gasto, impacto e avaliação'],
-  ['Oferta turística', 'Cadastur, inventário e serviços'],
-  ['Território', 'Bairros, praias e segunda residência'],
-  ['Mobilidade', 'Acessos, circulação e sazonalidade'],
-  ['Sustentabilidade', 'Ambiente, inclusão e governança'],
-];
-
-const sources = [
-  { name: 'IBGE e Fundação Seade', detail: 'População, PIB, empresas e indicadores territoriais', status: 'Planejada' },
-  { name: 'RAIS e Novo Caged', detail: 'Empregos, admissões, desligamentos e remuneração', status: 'Planejada' },
-  { name: 'Cadastur e inventário', detail: 'Prestadores, equipamentos e serviços turísticos', status: 'Em preparação' },
-  { name: 'Fazenda Municipal', detail: 'ISS agregado por atividades ligadas ao turismo', status: 'Em preparação' },
-  { name: 'Trade e eventos', detail: 'Ocupação, demanda e pesquisas de impacto', status: 'Instrumentos' },
-];
-
-function Header() {
-  return <View style={styles.header}>
-    <View style={styles.brandMark}><Text style={styles.brandWave}>≈</Text></View>
-    <View style={{ flex: 1 }}>
-      <Text style={styles.kicker}>PREFEITURA DE BERTIOGA</Text>
-      <Text style={styles.title}>Observatório do Turismo</Text>
-    </View>
-    <View style={styles.live}><View style={styles.liveDot}/><Text style={styles.liveText}>PILOTO</Text></View>
-  </View>;
+function Summary(){
+ const m=tourismData.metrics; const top=[...tourismData.giss].sort((a,b)=>b.y2025-a.y2025).slice(0,5); const max=top[0]?.y2025??1;
+ return <><View style={s.hero}><Text style={s.heroOverline}>ISS DAS ATIVIDADES SELECIONADAS</Text><Text style={s.heroValue}>{money(m.revenue2025)}</Text><Text style={s.heroLabel}>ISS arrecadado em 2025</Text><View style={s.delta}><Text style={s.deltaValue}>↑ {percent(m.variation)}</Text><Text style={s.deltaText}>{money(m.difference)} acima de 2024</Text></View></View>
+ <Title title="Indicadores principais" subtitle="Toque nas abas para explorar os dados"/>
+ <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.metricsRow}><Metric label="ISS arrecadado 2024" value={money(m.revenue2024)} note="Período A" color={C.blue}/><Metric label="ISS arrecadado 2025" value={money(m.revenue2025)} note="Período B" color={C.green}/><Metric label="Prestadores únicos" value={number(m.providers)} note="CNPJ/CPF ativos" color={C.coral}/><Metric label="Cadastur" value={number(m.cadastur)} note="Registros" color={C.yellow}/><Metric label="CNPJ cruzados" value={number(m.matched)} note="de 105 CNPJs" color={C.cyan}/></ScrollView>
+ <View style={s.panel}><Title title="Maiores arrecadações em 2025" subtitle="Por código de serviço"/>{top.map(r=><Bar key={r.code+r.description} label={`${r.code} • ${r.description}`} value={r.y2025} max={max} detail={money(r.y2025)}/>)}</View>
+ <View style={s.note}><Text style={s.noteTitle}>Leitura responsável</Text><Text style={s.noteText}>Os valores representam ISS arrecadado na cesta de serviços selecionada. Não equivalem ao PIB total do turismo. Fonte: GISS e cadastro municipal.</Text></View></>
 }
 
-function Hero() {
-  return <View style={styles.hero}>
-    <Text style={styles.heroEyebrow}>ECONOMIA TURÍSTICA EM EVIDÊNCIA</Text>
-    <Text style={styles.heroTitle}>Dados para transformar turismo em desenvolvimento.</Text>
-    <Text style={styles.heroBody}>Informação confiável, rastreável e útil para decisões públicas e privadas em Bertioga.</Text>
-    <View style={styles.period}><Text style={styles.periodLabel}>PERÍODO DE REFERÊNCIA</Text><Text style={styles.periodValue}>Linha de base • implantação</Text></View>
-  </View>;
+function Iss(){
+ const [year,setYear]=useState<Year>(2025); const [filter,setFilter]=useState<GissFilter>('Maiores'); const [query,setQuery]=useState('');
+ const rows=useMemo(()=>{let list=tourismData.giss.filter(r=>`${r.code} ${r.description}`.toLowerCase().includes(query.toLowerCase()));if(filter==='Altas')return [...list].filter(r=>r.diff>0).sort((a,b)=>b.diff-a.diff);if(filter==='Quedas')return [...list].filter(r=>r.diff<0).sort((a,b)=>a.diff-b.diff);return [...list].sort((a,b)=>year===2025?b.y2025-a.y2025:b.y2024-a.y2024)},[year,filter,query]);
+ const max=Math.max(1,...rows.map(r=>filter==='Maiores'?(year===2025?r.y2025:r.y2024):Math.abs(r.diff))); const total=year===2025?tourismData.metrics.revenue2025:tourismData.metrics.revenue2024;
+ return <><PageHero overline="ARRECADAÇÃO MUNICIPAL" title="ISS por serviço" body="Compare 2024 e 2025, pesquise serviços e identifique altas e quedas."/><Segment values={[2024,2025]} selected={year} onSelect={v=>setYear(v as Year)}/>
+ <View style={s.total}><Text style={s.totalLabel}>ISS ARRECADADO EM {year}</Text><Text style={s.totalValue}>{money(total)}</Text>{year===2025&&<Text style={s.totalPositive}>+{percent(tourismData.metrics.variation)} sobre 2024</Text>}</View>
+ <View style={s.chips}>{(['Maiores','Altas','Quedas'] as GissFilter[]).map(v=><TouchableOpacity key={v} onPress={()=>setFilter(v)} style={[s.chip,filter===v&&s.chipActive]}><Text style={[s.chipText,filter===v&&s.chipTextActive]}>{v}</Text></TouchableOpacity>)}</View>
+ <Search value={query} setValue={setQuery} placeholder="Buscar código ou serviço…"/><View style={s.panel}><Text style={s.count}>{rows.length} SERVIÇOS ENCONTRADOS</Text>{rows.map(r=>{const v=filter==='Maiores'?(year===2025?r.y2025:r.y2024):r.diff;return <Bar key={r.code+r.description} label={`${r.code} • ${r.description}`} value={v} max={max} detail={filter==='Maiores'?money(v):`${v>=0?'+':''}${money(v)}`} negative={v<0}/>})}</View></>
 }
 
-function Overview() {
-  const bars = [42, 68, 54, 86, 73, 92];
-  return <>
-    <Hero />
-    <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Painel executivo</Text><Text style={styles.sectionMeta}>Dados demonstrativos</Text></View>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsRow}>
-      {indicators.map((item) => <View style={styles.metricCard} key={item.label}>
-        <View style={[styles.metricAccent, { backgroundColor: item.color }]} />
-        <Text style={styles.metricLabel}>{item.label}</Text>
-        <Text style={styles.metricValue}>{item.value}</Text>
-        <Text style={styles.metricNote}>{item.note}</Text>
-      </View>)}
-    </ScrollView>
-    <View style={styles.panel}>
-      <View style={styles.panelHead}><View><Text style={styles.panelTitle}>Sazonalidade turística</Text><Text style={styles.panelSub}>Estrutura preparada para série mensal</Text></View><Text style={styles.panelBadge}>MODELO</Text></View>
-      <View style={styles.chart}>
-        {bars.map((h, i) => <View key={i} style={styles.barColumn}><View style={[styles.bar, { height: h }]} /><Text style={styles.barLabel}>{['Jan','Mar','Mai','Jul','Set','Nov'][i]}</Text></View>)}
-      </View>
-      <Text style={styles.disclaimer}>Valores visuais ilustrativos. Nenhum número será publicado como oficial sem validação, fonte e data de atualização.</Text>
-    </View>
-    <View style={styles.callout}><Text style={styles.calloutNumber}>90</Text><View style={{flex: 1}}><Text style={styles.calloutTitle}>dias para a base institucional</Text><Text style={styles.calloutText}>Governança, plano de indicadores, fontes prioritárias e instrumentos de coleta testados.</Text></View></View>
-  </>;
+function Cadastur(){
+ const [mode,setMode]=useState<'Atividades'|'Bairros'>('Atividades'); const rows=mode==='Atividades'?tourismData.cadasturActivities:tourismData.neighborhoods; const max=rows[0]?.count??1;
+ return <><PageHero overline="OFERTA TURÍSTICA FORMAL" title="Cadastur em Bertioga" body="Distribuição dos 123 registros por atividade e localização."/><Segment values={['Atividades','Bairros']} selected={mode} onSelect={v=>setMode(v as typeof mode)}/><View style={s.panel}><Title title={mode==='Atividades'?'Registros por atividade':'Registros por bairro'} subtitle="Selecione o tipo de análise"/>{rows.map(r=><Bar key={r.name} label={r.name==='-'?'Bairro não informado':r.name} value={r.count} max={max} detail={number(r.count)}/>)}</View><View style={s.match}><Text style={s.matchPct}>{percent(tourismData.metrics.matched/105)}</Text><View style={{flex:1}}><Text style={s.matchTitle}>CNPJs Cadastur cruzados</Text><Text style={s.matchText}>97 dos 105 CNPJs localizados no cadastro municipal. Outros 18 registros são pessoas físicas/guias.</Text></View></View></>
 }
 
-function Indicators() {
-  return <>
-    <View style={styles.pageIntro}><Text style={styles.pageTitle}>Oito eixos de inteligência</Text><Text style={styles.pageBody}>A arquitetura inicial organiza indicadores econômicos, territoriais e de gestão em uma visão única.</Text></View>
-    <View style={styles.axesGrid}>{axes.map((axis, i) => <View style={styles.axisCard} key={axis[0]}><View style={styles.axisTop}><Text style={styles.axisNumber}>{String(i + 1).padStart(2, '0')}</Text><View style={[styles.axisDot, { backgroundColor: [COLORS.blue, COLORS.cyan, COLORS.coral, COLORS.green][i % 4] }]} /></View><Text style={styles.axisTitle}>{axis[0]}</Text><Text style={styles.axisText}>{axis[1]}</Text></View>)}</View>
-    <View style={styles.goal}><Text style={styles.goalOverline}>META DA PRIMEIRA ENTREGA</Text><Text style={styles.goalValue}>20–25</Text><Text style={styles.goalText}>indicadores completos, com conceito, método, periodicidade, responsável e fonte.</Text></View>
-  </>;
+function Cnaes(){
+ const [query,setQuery]=useState(''); const rows=useMemo(()=>tourismData.cnaes.filter(r=>`${r.code} ${r.name}`.toLowerCase().includes(query.toLowerCase())),[query]); const max=rows[0]?.count??1;
+ return <><PageHero overline="CADASTRO MOBILIÁRIO" title="Atividades econômicas" body="Prestadores únicos por CNAE na seleção vinculada à economia turística."/><Search value={query} setValue={setQuery} placeholder="Buscar CNAE ou atividade…" top/><View style={s.panel}><Title title="CNAEs com mais prestadores" subtitle="Um prestador pode possuir mais de um CNAE"/>{rows.map(r=><Bar key={r.code} label={`${r.code} • ${r.name}`} value={r.count} max={max} detail={number(r.count)}/>)}</View><View style={s.note}><Text style={s.noteTitle}>Base cadastral</Text><Text style={s.noteText}>{number(tourismData.metrics.providers)} prestadores únicos e {number(tourismData.metrics.activityRecords)} registros ativos de atividades.</Text></View></>
 }
 
-function Sources() {
-  return <>
-    <View style={styles.pageIntro}><Text style={styles.pageTitle}>Fontes e rastreabilidade</Text><Text style={styles.pageBody}>Cada indicador deverá exibir origem, metodologia, cobertura, periodicidade e última atualização.</Text></View>
-    {sources.map((source) => <View style={styles.sourceCard} key={source.name}><View style={styles.sourceIcon}><Text style={styles.sourceIconText}>↗</Text></View><View style={{flex: 1}}><View style={styles.sourceLine}><Text style={styles.sourceName}>{source.name}</Text><Text style={styles.sourceStatus}>{source.status}</Text></View><Text style={styles.sourceDetail}>{source.detail}</Text></View></View>)}
-    <View style={styles.privacy}><Text style={styles.privacyTitle}>Privacidade por desenho</Text><Text style={styles.privacyText}>Divulgação somente de informações agregadas, com controle de acesso às bases administrativas e aplicação dos princípios da LGPD.</Text></View>
-  </>;
-}
+function PageHero({overline,title,body}:{overline:string;title:string;body:string}){return <View style={s.pageHero}><Text style={s.heroOverline}>{overline}</Text><Text style={s.pageTitle}>{title}</Text><Text style={s.pageBody}>{body}</Text></View>}
+function Segment({values,selected,onSelect}:{values:readonly (string|number)[];selected:string|number;onSelect:(v:string|number)=>void}){return <View style={s.segment}>{values.map(v=><TouchableOpacity key={String(v)} onPress={()=>onSelect(v)} style={[s.segmentButton,selected===v&&s.segmentActive]}><Text style={[s.segmentText,selected===v&&s.segmentTextActive]}>{v}</Text></TouchableOpacity>)}</View>}
+function Search({value,setValue,placeholder,top=false}:{value:string;setValue:(v:string)=>void;placeholder:string;top?:boolean}){return <TextInput value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor="#8A9B9F" style={[s.search,top&&{marginTop:18}]}/>}
 
-function AppContent() {
-  const [tab, setTab] = useState<Tab>('Visão geral');
-  const body = useMemo(() => tab === 'Visão geral' ? <Overview/> : tab === 'Indicadores' ? <Indicators/> : <Sources/>, [tab]);
-  return <SafeAreaView style={styles.safe} edges={['top']}>
-    <StatusBar barStyle="light-content" backgroundColor={COLORS.navy}/>
-    <Header/>
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>{body}<Text style={styles.footer}>OMTB • Observatório Municipal do Turismo de Bertioga</Text></ScrollView>
-    <View style={styles.tabs}>{(['Visão geral','Indicadores','Fontes'] as Tab[]).map((item, i) => <TouchableOpacity accessibilityRole="button" key={item} style={[styles.tab, tab === item && styles.tabActive]} onPress={() => setTab(item)}><Text style={[styles.tabIcon, tab === item && styles.tabTextActive]}>{['⌂','▦','◎'][i]}</Text><Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item}</Text></TouchableOpacity>)}</View>
-  </SafeAreaView>;
-}
+function Content(){const [tab,setTab]=useState<Tab>('Resumo');const body=tab==='Resumo'?<Summary/>:tab==='ISS'?<Iss/>:tab==='Cadastur'?<Cadastur/>:<Cnaes/>;return <SafeAreaView style={s.safe} edges={['top']}><StatusBar barStyle="light-content" backgroundColor={C.navy}/><Header/><ScrollView style={s.scroll} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">{body}<Text style={s.footer}>OMTB • Base consolidada em 22/08/2026</Text></ScrollView><View style={s.tabs}>{(['Resumo','ISS','Cadastur','CNAEs'] as Tab[]).map((v,i)=><TouchableOpacity key={v} onPress={()=>setTab(v)} style={[s.tab,tab===v&&s.tabActive]}><Text style={[s.tabIcon,tab===v&&s.tabTextActive]}>{['⌂','R$','◎','▦'][i]}</Text><Text style={[s.tabText,tab===v&&s.tabTextActive]}>{v}</Text></TouchableOpacity>)}</View></SafeAreaView>}
+export default function App(){return <SafeAreaProvider><Content/></SafeAreaProvider>}
 
-export default function App() { return <SafeAreaProvider><AppContent/></SafeAreaProvider>; }
-
-const styles = StyleSheet.create({
-  safe:{flex:1,backgroundColor:COLORS.navy},scroll:{flex:1,backgroundColor:COLORS.pale},content:{paddingBottom:28},
-  header:{height:76,backgroundColor:COLORS.navy,flexDirection:'row',alignItems:'center',paddingHorizontal:18,gap:12},brandMark:{width:42,height:42,borderRadius:14,backgroundColor:COLORS.cyan,alignItems:'center',justifyContent:'center'},brandWave:{color:COLORS.white,fontSize:28,fontWeight:'800',marginTop:-5},kicker:{color:'#9FC6CA',fontSize:9,fontWeight:'800',letterSpacing:1.4},title:{color:COLORS.white,fontSize:18,fontWeight:'800',marginTop:2},live:{flexDirection:'row',alignItems:'center',gap:5,borderWidth:1,borderColor:'#386370',paddingHorizontal:8,paddingVertical:5,borderRadius:12},liveDot:{width:6,height:6,borderRadius:3,backgroundColor:COLORS.yellow},liveText:{fontSize:8,color:COLORS.white,fontWeight:'800',letterSpacing:.8},
-  hero:{backgroundColor:COLORS.navy,paddingHorizontal:20,paddingTop:18,paddingBottom:28,borderBottomLeftRadius:28,borderBottomRightRadius:28},heroEyebrow:{color:COLORS.yellow,fontSize:10,fontWeight:'900',letterSpacing:1.4},heroTitle:{color:COLORS.white,fontSize:28,lineHeight:34,fontWeight:'900',marginTop:10,maxWidth:350},heroBody:{color:'#B8D1D3',fontSize:14,lineHeight:21,marginTop:10,maxWidth:360},period:{marginTop:20,backgroundColor:'#104B5D',borderRadius:14,padding:12,borderLeftWidth:3,borderLeftColor:COLORS.cyan},periodLabel:{fontSize:8,color:'#9FC6CA',fontWeight:'800',letterSpacing:1},periodValue:{fontSize:13,color:COLORS.white,fontWeight:'700',marginTop:3},
-  sectionHeader:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:20,marginTop:24,marginBottom:12},sectionTitle:{fontSize:20,fontWeight:'900',color:COLORS.ink},sectionMeta:{fontSize:10,color:COLORS.muted,fontWeight:'700'},cardsRow:{paddingHorizontal:16,gap:10},metricCard:{width:156,minHeight:134,backgroundColor:COLORS.white,borderRadius:18,padding:15,overflow:'hidden',borderWidth:1,borderColor:'#E8EEEE'},metricAccent:{position:'absolute',height:5,left:0,right:0,top:0},metricLabel:{fontSize:12,color:COLORS.muted,fontWeight:'700',marginTop:6},metricValue:{fontSize:30,color:COLORS.ink,fontWeight:'900',marginTop:8},metricNote:{fontSize:10,color:COLORS.muted,marginTop:5},
-  panel:{margin:20,backgroundColor:COLORS.white,borderRadius:20,padding:18,borderWidth:1,borderColor:'#E8EEEE'},panelHead:{flexDirection:'row',justifyContent:'space-between'},panelTitle:{fontSize:16,fontWeight:'900',color:COLORS.ink},panelSub:{fontSize:10,color:COLORS.muted,marginTop:3},panelBadge:{fontSize:8,color:COLORS.blue,fontWeight:'900',backgroundColor:'#E7F4F5',paddingHorizontal:8,paddingVertical:5,borderRadius:9,alignSelf:'flex-start'},chart:{height:126,flexDirection:'row',alignItems:'flex-end',justifyContent:'space-around',marginTop:18,borderBottomWidth:1,borderBottomColor:COLORS.line},barColumn:{alignItems:'center',justifyContent:'flex-end',height:120},bar:{width:23,backgroundColor:COLORS.cyan,borderTopLeftRadius:6,borderTopRightRadius:6},barLabel:{fontSize:9,color:COLORS.muted,marginTop:5},disclaimer:{fontSize:9,lineHeight:14,color:COLORS.muted,marginTop:14},
-  callout:{marginHorizontal:20,marginBottom:10,borderRadius:20,padding:18,backgroundColor:COLORS.sand,flexDirection:'row',alignItems:'center',gap:16},calloutNumber:{fontSize:44,fontWeight:'900',color:COLORS.coral},calloutTitle:{fontSize:15,fontWeight:'900',color:COLORS.ink},calloutText:{fontSize:11,lineHeight:16,color:COLORS.muted,marginTop:4},
-  pageIntro:{padding:22,backgroundColor:COLORS.navy,borderBottomLeftRadius:28,borderBottomRightRadius:28},pageTitle:{color:COLORS.white,fontSize:27,fontWeight:'900'},pageBody:{color:'#B8D1D3',fontSize:13,lineHeight:20,marginTop:8},axesGrid:{padding:16,flexDirection:'row',flexWrap:'wrap',gap:10},axisCard:{width:'48%',minHeight:145,backgroundColor:COLORS.white,borderRadius:18,padding:15,borderWidth:1,borderColor:'#E8EEEE'},axisTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},axisNumber:{color:'#B7C6C9',fontSize:11,fontWeight:'900'},axisDot:{width:9,height:9,borderRadius:5},axisTitle:{fontSize:14,fontWeight:'900',color:COLORS.ink,marginTop:18},axisText:{fontSize:10,lineHeight:15,color:COLORS.muted,marginTop:6},goal:{marginHorizontal:16,marginBottom:16,backgroundColor:COLORS.blue,borderRadius:20,padding:20},goalOverline:{fontSize:9,fontWeight:'900',letterSpacing:1,color:'#BFE5E7'},goalValue:{fontSize:42,fontWeight:'900',color:COLORS.white,marginTop:5},goalText:{fontSize:12,lineHeight:18,color:'#D8F0F1',maxWidth:280},
-  sourceCard:{marginHorizontal:16,marginTop:10,backgroundColor:COLORS.white,borderRadius:16,padding:14,flexDirection:'row',gap:12,borderWidth:1,borderColor:'#E8EEEE'},sourceIcon:{width:38,height:38,borderRadius:12,backgroundColor:'#E7F4F5',alignItems:'center',justifyContent:'center'},sourceIconText:{color:COLORS.blue,fontSize:20,fontWeight:'900'},sourceLine:{flexDirection:'row',justifyContent:'space-between',gap:8},sourceName:{fontSize:13,color:COLORS.ink,fontWeight:'900',flex:1},sourceStatus:{fontSize:8,color:COLORS.blue,fontWeight:'800',backgroundColor:'#E7F4F5',paddingHorizontal:6,paddingVertical:4,borderRadius:8},sourceDetail:{fontSize:10,lineHeight:15,color:COLORS.muted,marginTop:5},privacy:{margin:16,backgroundColor:COLORS.sand,borderRadius:18,padding:18,borderLeftWidth:4,borderLeftColor:COLORS.green},privacyTitle:{fontSize:15,fontWeight:'900',color:COLORS.ink},privacyText:{fontSize:11,lineHeight:17,color:COLORS.muted,marginTop:6},
-  footer:{fontSize:9,textAlign:'center',color:'#8A9A9F',marginTop:16,marginHorizontal:20},tabs:{height:72,backgroundColor:COLORS.white,flexDirection:'row',paddingHorizontal:10,borderTopWidth:1,borderTopColor:COLORS.line},tab:{flex:1,alignItems:'center',justifyContent:'center',gap:3,borderTopWidth:3,borderTopColor:'transparent'},tabActive:{borderTopColor:COLORS.cyan},tabIcon:{fontSize:18,color:'#87979B'},tabText:{fontSize:9,fontWeight:'700',color:'#87979B'},tabTextActive:{color:COLORS.blue},
+const s=StyleSheet.create({
+ safe:{flex:1,backgroundColor:C.navy},scroll:{flex:1,backgroundColor:C.pale},content:{paddingBottom:22},header:{height:74,backgroundColor:C.navy,flexDirection:'row',alignItems:'center',paddingHorizontal:16,gap:11},mark:{width:42,height:42,borderRadius:14,backgroundColor:C.cyan,alignItems:'center',justifyContent:'center'},wave:{color:C.white,fontSize:28,fontWeight:'900',marginTop:-5},kicker:{color:'#A8CBCE',fontSize:8,fontWeight:'900',letterSpacing:1.2},brand:{color:C.white,fontSize:17,fontWeight:'900',marginTop:2},badge:{flexDirection:'row',alignItems:'center',gap:4,borderWidth:1,borderColor:'#386673',borderRadius:10,padding:6},badgeDot:{width:6,height:6,borderRadius:3,backgroundColor:C.green},badgeText:{color:C.white,fontSize:7,fontWeight:'900'},
+ hero:{backgroundColor:C.navy,padding:22,paddingBottom:28,borderBottomLeftRadius:28,borderBottomRightRadius:28},heroOverline:{color:C.yellow,fontSize:9,fontWeight:'900',letterSpacing:1.2},heroValue:{color:C.white,fontSize:35,fontWeight:'900',marginTop:8},heroLabel:{color:'#B7D2D4',fontSize:13},delta:{marginTop:18,backgroundColor:'#104C5E',borderRadius:14,padding:12,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},deltaValue:{color:'#79E0B1',fontSize:16,fontWeight:'900'},deltaText:{color:C.white,fontSize:10,fontWeight:'700'},
+ sectionHead:{paddingHorizontal:18,marginTop:18,marginBottom:9},sectionTitle:{fontSize:18,fontWeight:'900',color:C.ink},sectionSub:{fontSize:10,color:C.muted,marginTop:3},metricsRow:{paddingHorizontal:14,gap:9},metric:{width:165,minHeight:124,backgroundColor:C.white,borderRadius:17,padding:14,overflow:'hidden',borderWidth:1,borderColor:'#E5EEEE'},metricLine:{position:'absolute',top:0,left:0,right:0,height:5},metricLabel:{fontSize:10,color:C.muted,fontWeight:'700',marginTop:5},metricValue:{fontSize:22,color:C.ink,fontWeight:'900',marginTop:12},metricNote:{fontSize:9,color:C.muted,marginTop:6},
+ panel:{margin:16,backgroundColor:C.white,borderRadius:20,paddingBottom:14,borderWidth:1,borderColor:'#E4EEEE'},barRow:{paddingHorizontal:18,marginTop:13},barLabels:{flexDirection:'row',alignItems:'flex-end',gap:10},barName:{flex:1,fontSize:10,lineHeight:14,color:C.ink,fontWeight:'700'},barValue:{fontSize:10,color:C.blue,fontWeight:'900'},track:{height:7,backgroundColor:'#E9F0F0',borderRadius:6,marginTop:6,overflow:'hidden'},fill:{height:7,borderRadius:6},note:{marginHorizontal:16,marginBottom:8,backgroundColor:C.sand,borderRadius:18,padding:17,borderLeftWidth:4,borderLeftColor:C.yellow},noteTitle:{fontSize:14,fontWeight:'900',color:C.ink},noteText:{fontSize:10,lineHeight:16,color:C.muted,marginTop:5},
+ pageHero:{backgroundColor:C.navy,padding:22,paddingBottom:25,borderBottomLeftRadius:28,borderBottomRightRadius:28},pageTitle:{color:C.white,fontSize:28,fontWeight:'900',marginTop:6},pageBody:{color:'#B8D1D3',fontSize:12,lineHeight:18,marginTop:6},segment:{flexDirection:'row',backgroundColor:'#E2ECEC',marginHorizontal:16,marginTop:18,padding:4,borderRadius:14},segmentButton:{flex:1,paddingVertical:10,alignItems:'center',borderRadius:11},segmentActive:{backgroundColor:C.white},segmentText:{fontSize:12,fontWeight:'800',color:C.muted},segmentTextActive:{color:C.blue},total:{margin:16,marginBottom:0,backgroundColor:C.blue,borderRadius:18,padding:18},totalLabel:{fontSize:9,color:'#C4E7E9',fontWeight:'900',letterSpacing:1},totalValue:{fontSize:28,color:C.white,fontWeight:'900',marginTop:5},totalPositive:{fontSize:11,color:'#8EE3BC',fontWeight:'800',marginTop:6},chips:{flexDirection:'row',gap:8,paddingHorizontal:16,marginTop:14},chip:{paddingHorizontal:15,paddingVertical:9,borderRadius:18,backgroundColor:C.white,borderWidth:1,borderColor:C.line},chipActive:{backgroundColor:C.navy,borderColor:C.navy},chipText:{fontSize:10,fontWeight:'800',color:C.muted},chipTextActive:{color:C.white},search:{marginHorizontal:16,marginTop:12,height:46,backgroundColor:C.white,borderRadius:14,paddingHorizontal:15,borderWidth:1,borderColor:C.line,color:C.ink,fontSize:12},count:{fontSize:9,color:C.muted,fontWeight:'800',marginHorizontal:18,marginTop:16,letterSpacing:.6},
+ match:{margin:16,marginTop:0,backgroundColor:'#DDF3EC',borderRadius:18,padding:17,flexDirection:'row',alignItems:'center',gap:16},matchPct:{fontSize:28,fontWeight:'900',color:C.green},matchTitle:{fontSize:13,fontWeight:'900',color:C.ink},matchText:{fontSize:10,lineHeight:15,color:C.muted,marginTop:4},footer:{textAlign:'center',fontSize:9,color:'#899A9E',margin:15},tabs:{height:70,backgroundColor:C.white,flexDirection:'row',borderTopWidth:1,borderTopColor:C.line},tab:{flex:1,alignItems:'center',justifyContent:'center',gap:2,borderTopWidth:3,borderTopColor:'transparent'},tabActive:{borderTopColor:C.cyan},tabIcon:{fontSize:15,color:'#8C9A9E',fontWeight:'900'},tabText:{fontSize:8,fontWeight:'800',color:'#8C9A9E'},tabTextActive:{color:C.blue},
 });
