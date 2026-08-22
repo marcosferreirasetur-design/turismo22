@@ -1,0 +1,61 @@
+name: Gerar APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "App.tsx"
+      - "app.json"
+      - "package.json"
+      - "tsconfig.json"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Montar aplicativo Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Baixar o projeto
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Gerar projeto Android
+        run: npx expo prebuild --platform android --non-interactive --clean
+
+      - name: Montar APK de teste
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Organizar arquivo
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Observatorio-Turismo-Bertioga.apk
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Observatorio-Turismo-Bertioga-Android
+          path: Observatorio-Turismo-Bertioga.apk
+          if-no-files-found: error
+          retention-days: 30
