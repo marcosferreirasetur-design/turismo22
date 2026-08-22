@@ -2,14 +2,6 @@ name: Gerar aplicativo iOS
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "App.tsx"
-      - "app.json"
-      - "eas.json"
-      - "src/data.ts"
-      - ".github/workflows/ios-eas.yml"
 
 permissions:
   contents: read
