@@ -38,8 +38,6 @@ jobs:
           cp public/manifest.json public/icon.svg public/sw.js dist/
           node scripts/prepare-pwa.mjs
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
